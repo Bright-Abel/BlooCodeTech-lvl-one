@@ -267,3 +267,7 @@ export default productSlice.reducer;
 - Stars.jsx
 
 # In the ProductDisplay component fetch the featured_product array from the product state and render the product
+
+## Made the filter state to be persistent and filterProduct by saving them in the session storage
+
+## Created "useSyncFiltersWithUrl" file in the component to append the filters params to the url

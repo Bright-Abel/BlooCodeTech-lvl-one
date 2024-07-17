@@ -46,6 +46,7 @@ export const navFunction = [
     id: 3,
     logo: <MdOutlineShoppingCart className="text-2xl font-bold" />,
     text: 'cart',
+
     // genLogo: <MdOutlineKeyboardArrowDown className="text-xl font-medium" />,
   },
 ];

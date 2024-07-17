@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const authFetch = axios.create({
-  baseURL: '',
+  baseURL: 'https://dummyjson.com/',
   headers: {
     Accept: 'application/json',
   },

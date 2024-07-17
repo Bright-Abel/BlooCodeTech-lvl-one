@@ -1,37 +1,118 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { useEffect } from 'react';
 
+// Initial filter state
+const initialFilterState = {
+  text: '',
+  brand: 'all',
+  category: 'all',
+  min_price: 0,
+  max_price: 0,
+  price: 0,
+  info: 'name-a',
+  sort: 'name (a-z)',
+};
+
+// Load filters from local storage
+const loadFilters = () => {
+  try {
+    const serializedState = sessionStorage.getItem('filters');
+    if (serializedState === null) {
+      return initialFilterState;
+    }
+    return JSON.parse(serializedState);
+  } catch (err) {
+    console.error('Could not load filters', err);
+    return initialFilterState;
+  }
+};
+
+// Load filtered products from local storage
+const loadFilteredProducts = () => {
+  try {
+    const serializedState = sessionStorage.getItem('filtered_products');
+    if (serializedState === null) {
+      return [];
+    }
+    return JSON.parse(serializedState);
+  } catch (err) {
+    console.error('Could not load filtered products', err);
+    return [];
+  }
+};
+
+// Save filters to local storage
+const saveFilters = (filters) => {
+  try {
+    const serializedState = JSON.stringify(filters);
+    sessionStorage.setItem('filters', serializedState);
+  } catch (err) {
+    console.error('Could not save filters', err);
+  }
+};
+
+// Save filtered products to local storage
+const saveFilteredProducts = (filteredProducts) => {
+  try {
+    const serializedState = JSON.stringify(filteredProducts);
+    sessionStorage.setItem('filtered_products', serializedState);
+  } catch (err) {
+    console.error('Could not save filtered products', err);
+  }
+};
+
+// Initial state
 const initialState = {
   hideSortPanel: true,
-  filtered_products: [],
+  filtered_products: loadFilteredProducts(),
+  isLoading: false,
   all_product: [],
-  sort: 'name (a-z)',
-  info: '',
-  filters: {
-    text: '',
-    brand: 'all',
-    category: 'all',
-    // color: 'all',
-    min_price: 0,
-    max_price: 0,
-    price: 0,
-    // shipping: false,
-  },
+
+  filters: loadFilters(),
+};
+
+// Apply filters to products
+const applyFilters = (products, filters) => {
+  let tempProduct = [...products];
+
+  if (filters.text) {
+    tempProduct = tempProduct.filter((product) =>
+      product.description.toLowerCase().startsWith(filters.text.toLowerCase())
+    );
+  }
+  if (filters.category !== 'all') {
+    tempProduct = tempProduct.filter(
+      (product) => product.category === filters.category
+    );
+  }
+  if (filters.brand !== 'all') {
+    tempProduct = tempProduct.filter(
+      (product) => product.brand === filters.brand
+    );
+  }
+  if (filters.price !== 0) {
+    tempProduct = tempProduct.filter(
+      (product) => product.price <= filters.price
+    );
+  }
+
+  return tempProduct;
 };
 
 export const productSlice = createSlice({
-  name: 'cart',
+  name: 'product',
   initialState,
   reducers: {
     updateFilters: (state, { payload: { name, value } }) => {
       state.filters[name] = value;
+      saveFilters(state.filters);
     },
     hideSort: (state) => {
       state.hideSortPanel = !state.hideSortPanel;
     },
     sortFilter: (state, { payload: { name, value, id, info } }) => {
-      state[name] = value;
-      state[id] = info;
+      state.filters[name] = value;
+      state.filters[id] = info;
+      saveFilters(state.filters);
     },
     updateProduct: (state, { payload }) => {
       state.all_product = payload;
@@ -39,55 +120,23 @@ export const productSlice = createSlice({
       maxPrice = Math.max(...maxPrice);
       state.filters.max_price = maxPrice;
       state.filters.price = maxPrice;
+      saveFilters(state.filters);
+      state.filtered_products = applyFilters(state.all_product, state.filters);
+      saveFilteredProducts(state.filtered_products);
     },
     filterSearch: (state) => {
-      const { all_product } = state;
-      const { text } = state.filters;
-      let tempProduct = [...all_product];
-      if (text) {
-        tempProduct = tempProduct.filter((product) => {
-          return product.description
-            .toLowerCase()
-            .startsWith(text.toLowerCase()); //startsWith or includes
-        });
-      }
-
-      return { ...state, filtered_products: tempProduct };
+      state.filtered_products = applyFilters(state.all_product, state.filters);
+      saveFilteredProducts(state.filtered_products);
     },
     productFilter: (state) => {
-      const { all_product } = state;
-      const { text, category, company, price, brand } = state.filters;
-      let tempProduct = [...all_product];
-      //   FILTERING
-      // SEARCH
-
-      // CATEGORY
-      if (category !== 'all') {
-        tempProduct = tempProduct.filter((product) => {
-          return product.category === category;
-        });
-      }
-      //   BRAND
-      if (brand !== 'all') {
-        tempProduct = tempProduct.filter((product) => {
-          return product.brand === brand;
-        });
-      }
-
-      // PRICE
-      if (price !== 0) {
-        tempProduct = tempProduct.filter((product) => {
-          return product.price <= price;
-        });
-      }
-      //   state.filtered_products = tempProduct;
-      //   console.log(state.filtered_products.length);
-      return { ...state, filtered_products: tempProduct };
+      state.filtered_products = applyFilters(state.all_product, state.filters);
+      saveFilteredProducts(state.filtered_products);
     },
     updateSort: (state) => {
-      const { info, filtered_products } = state;
+      const { filtered_products } = state;
+      const { info } = state.filters;
 
-      let tempProducts = [...filtered_products]; // Copy the filtered_products array
+      let tempProducts = [...filtered_products];
 
       switch (info) {
         case 'price-lowest':
@@ -110,26 +159,18 @@ export const productSlice = createSlice({
           break;
       }
 
-      return { ...state, filtered_products: tempProducts };
+      state.filtered_products = tempProducts;
+      saveFilteredProducts(state.filtered_products);
     },
-
     clearFilters: (state) => {
-      return {
-        ...state,
-        filters: {
-          ...state.filters,
-          text: '',
-          company: 'all',
-          category: 'all',
-          color: 'all',
-
-          price: state.filters.max_price,
-          shipping: false,
-        },
-      };
+      state.filters = initialFilterState;
+      saveFilters(state.filters);
+      state.filtered_products = applyFilters(state.all_product, state.filters);
+      saveFilteredProducts(state.filtered_products);
     },
   },
 });
+
 export const {
   updateFilters,
   updateProduct,
@@ -140,4 +181,5 @@ export const {
   filterSearch,
   clearFilters,
 } = productSlice.actions;
+
 export default productSlice.reducer;

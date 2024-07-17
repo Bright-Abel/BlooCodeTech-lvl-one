@@ -1,6 +1,7 @@
 import { useLoaderData } from 'react-router-dom';
 import { IoIosArrowDown } from 'react-icons/io';
 import { IoIosArrowUp } from 'react-icons/io';
+// import { fetchProducts } from '../product__features/productSlice';
 import img from '../assets/empty.svg';
 import {
   sortFilter,
@@ -8,9 +9,11 @@ import {
   hideSort,
   updateSort,
   clearFilters,
+  updateFilters,
 } from '../product__features/productSlice';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import useSyncFiltersWithUrl from './useSyncFiltersWithUrl';
 
 import accountData from '../axios/data';
 import { useDispatch, useSelector } from 'react-redux';
@@ -19,20 +22,28 @@ import Stars from './Stars';
 import styled from 'styled-components';
 import ReactPaginate from 'react-paginate';
 
+//: { text, brand, category, sort }
 const ProductDisplay = () => {
-  const { all_product, filters, filtered_products, hideSortPanel, sort, info } =
-    useSelector((store) => store.product);
+  const { filters, filtered_products, hideSortPanel, info } = useSelector(
+    (store) => store.product
+  );
 
   const dispatch = useDispatch();
+
   useEffect(() => {
+    // AOS EFFECT
     AOS.init({
       duration: 1200,
       // easing: 'ease-in-sine',
       anchorPlacement: 'center-bottom',
     });
+    // END
+
     dispatch(productFilter());
     dispatch(updateSort());
-  }, [filters, info]);
+  }, [filters]);
+
+  useSyncFiltersWithUrl(filters);
 
   const handleClick = (e) => {
     const name = e.target.dataset.name;
@@ -134,7 +145,7 @@ const ProductDisplay = () => {
               }`}
             >
               <span>
-                Sort by: <span className="capitalize">{sort}</span>
+                Sort by: <span className="capitalize">{filters.sort}</span>
               </span>
               {hideSortPanel ? (
                 <IoIosArrowDown className="font-bold text-lg" />
@@ -181,7 +192,7 @@ const ProductDisplay = () => {
 
   return (
     <Wrapper className="">
-      <div className="bg-[#e61601] hidden md:flex px-5 py-2 lg:py-4 text-white  justify-between items-center rounded-t-lg">
+      <div className="bg-[#4EB1BA] hidden md:flex px-5 py-2 lg:py-4 text-white  justify-between items-center rounded-t-lg">
         <div className="text-white flex items-center  gap-2">
           <h1 className="text-lg font-medium  truncate ">All Products</h1>
           <p className="text-sm font-(400)">
@@ -196,7 +207,7 @@ const ProductDisplay = () => {
             }`}
           >
             <span>
-              Sort by: <span className="capitalize">{sort}</span>
+              Sort by: <span className="capitalize">{filters.sort}</span>
             </span>
             {hideSortPanel ? (
               <IoIosArrowDown className="font-bold text-lg" />
@@ -234,7 +245,7 @@ const ProductDisplay = () => {
           </div>
         </div>
       </div>
-      <div className="bg-[#e61601] flex md:hidden capitalize font-bold px-5 py-2 lg:py-4 text-white  justify-center">
+      <div className="bg-[#FF6F61] flex md:hidden capitalize font-bold px-5 py-2 lg:py-4 text-white  justify-center">
         All products
       </div>
       <div className="mt-2 lg:bg-white bg-[#e4e4e4] rounded-lg flex flex-wrap gap-x-2 gap-y-4 w-full  items-center">
@@ -258,7 +269,6 @@ const ProductDisplay = () => {
   );
 };
 export default ProductDisplay;
-// <div class="meter _s" style="background-image:linear-gradient(to right,#f68b1e 69.23076923076923%,#c7c7cd 69.23076923076923%);"></div>
 
 const Wrapper = styled.section`
   .textStyle {

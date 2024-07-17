@@ -1,13 +1,20 @@
 import { getUniqueValue } from '../axios/custom';
 import { useLoaderData } from 'react-router-dom';
-import { updateFilters } from '../product__features/productSlice';
+import {
+  updateFilters,
+  productFilter,
+} from '../product__features/productSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
+import { useEffect } from 'react';
 const Filters = () => {
   const { products } = useLoaderData();
   const {
     filters: { max_price, min_price, brand, price, category },
   } = useSelector((store) => store.product);
+  // useEffect(() => {
+  //   dispatch(productFilter());
+  // }, [brand, price, category ])
 
   const dispatch = useDispatch();
   const categories = getUniqueValue(products, 'category');
