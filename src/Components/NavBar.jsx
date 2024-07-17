@@ -109,7 +109,7 @@ const NavBar = () => {
 
                 return (
                   <Link
-                    to="/cart"
+                    to="/"
                     key={id}
                     // onClick={() => handleInfoShow(id)}
                     className={`flex justify-center items-center gap-2 capitalize box-border hover:text-[#f68b1e] duration-300  py-2 rounded-[4px] `}
